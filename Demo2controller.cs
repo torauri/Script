@@ -11,9 +11,7 @@ public class Demo2controller : MonoBehaviour {
 	private List<ActPosition2> JUMP = new List<ActPosition2>();
 	private List<ActPosition2> SLIDE = new List<ActPosition2>();
 	private ActPosition2 RUN;
-	private float frameCount;
-	private float targetFrame;
-	private bool enemyFlag;
+	private int frameCount;
 	private List<ComeObject> objectList = new List<ComeObject>();
 	private List<Schedule> TimeLine = new List<Schedule>();
 	private Schedule toFrame;
@@ -23,8 +21,7 @@ public class Demo2controller : MonoBehaviour {
 	void Start () {
 		anim = GetComponent<Animator>();
 		frameCount = 0;
-		enemyFlag = false;
-		targetFrame = 0;
+
 
 		string[] files = System.IO.Directory.GetFiles(Application.dataPath + "/Analys6Position/","*",System.IO.SearchOption.TopDirectoryOnly);
 
@@ -53,7 +50,7 @@ public class Demo2controller : MonoBehaviour {
 
 	// Update is called once per frame
 	void Update () {
-		frameCount +=1f;
+		frameCount +=1;
 		Debug.Log("Frame:"+frameCount.ToString() +" TimeLineCount:"+toFrame.GetFrame().ToString());
 
 
@@ -85,9 +82,9 @@ public class Demo2controller : MonoBehaviour {
 				SLIDEdisList[i]=a.AreaChecker(enemyArea);
 				i++;
 			}
-			enemyFlag = true;
+
 			Demo2enemy enemy = collider.gameObject.GetComponent<Demo2enemy>();
-			float enemyFrame = (float)System.Math.Floor((collider.gameObject.transform.position.z - 0.15f - this.gameObject.transform.position.z)/enemy.speed);
+			int enemyFrame = (int)((collider.gameObject.transform.position.z - 0.15f - this.gameObject.transform.position.z)/enemy.speed);
 
 			ComeObject obj = new ComeObject(JUMPdisList,SLIDEdisList,enemyFrame);
 			objectList.Add(obj);
@@ -151,20 +148,21 @@ public class Demo2controller : MonoBehaviour {
 
 public class ActPosition2{
 	string name = "";
-	float frame = 0;
-	float maxFrame = 0;
+	int frame = 0;
+	//int maxFrame = 0;
 	float[,] position6 = new float[6,2];
 	//Hip:0 LeftFoot:1 LeftHand:2 Head:3 RightHand:4 RightFoot:5
 
 	public ActPosition2(string pass){
 		string filename = System.IO.Path.GetFileNameWithoutExtension(pass);
 		name = filename.Substring(0,filename.Length-2);
-		frame = float.Parse(filename.Substring(filename.Length-2));
+		frame = int.Parse(filename.Substring(filename.Length-2));
+		/*
 		if(name == "JUMP"){
 			maxFrame = 56;
 		}else{
 			maxFrame = 40;
-		}
+		}*/
 
 		StreamReader sr = new StreamReader(pass);
 		string strStream = sr.ReadToEnd();
@@ -212,12 +210,8 @@ public class ActPosition2{
 		return name;
 	}
 
-	public float GetFrame(){
+	public int GetFrame(){
 		return frame;
-	}
-
-	public float GetPoint(){
-		return frame/maxFrame;
 	}
 
 	public float AreaChecker(float[,] enemy){
@@ -265,9 +259,9 @@ public class ActPosition2{
 public class ComeObject{
 	float[] JUMPdisList ;
 	float[] SLIDEdisList;
-	float comeTiming;
+	int comeTiming;
 
-	public ComeObject(float[] j,float[] s,float t){
+	public ComeObject(float[] j,float[] s,int t){
 		JUMPdisList = new float[j.Length];
 		SLIDEdisList = new float[s.Length];
 
@@ -277,11 +271,11 @@ public class ComeObject{
 		Debug.Log(comeTiming);
 	}
 
-	public float GetTiming(){
+	public int GetTiming(){
 		return comeTiming;
 	}
 
-	public List<Schedule> ActTiming(List<ActPosition2> j,List<ActPosition2> s,float f){
+	public List<Schedule> ActTiming(List<ActPosition2> j,List<ActPosition2> s,int f){
 		int maxJ = 0;
 		List<Schedule> result = new List<Schedule>();
 		for(int i=0;i<JUMPdisList.Length;i++){
@@ -300,13 +294,13 @@ public class ComeObject{
 		if(JUMPdisList[maxJ]>=SLIDEdisList[maxS]){
 			Debug.Log("JUMP!");
 			for(int i=0;i<j.Count;i++){
-				result.Add(new Schedule(f+comeTiming-j[maxJ].GetFrame()+(float)(i*2),j[i]));
+				result.Add(new Schedule(f+comeTiming-j[maxJ].GetFrame()+(i*2),j[i]));
 			}
 			return result;
 		}else{
 			Debug.Log("SLIDE!");
 			for(int i=0;i<s.Count;i++){
-				result.Add(new Schedule(f+comeTiming-s[maxS].GetFrame()+(float)(i*2),s[i]));
+				result.Add(new Schedule(f+comeTiming-s[maxS].GetFrame()+(i*2),s[i]));
 			}
 			return result;
 		}
@@ -314,10 +308,10 @@ public class ComeObject{
 }
 
 public class Schedule{
-	float frame;
+	int frame;
 	ActPosition2 act;
 	string StartAction = "";
-	public Schedule(float f,ActPosition2 a){
+	public Schedule(int f,ActPosition2 a){
 		frame = f;
 		act = a;
 		if(act.GetFrame() == 0){
