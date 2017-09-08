@@ -87,7 +87,7 @@ public class Demo2controller : MonoBehaviour {
 			}
 			enemyFlag = true;
 			Demo2enemy enemy = collider.gameObject.GetComponent<Demo2enemy>();
-			float enemyFrame = (collider.gameObject.transform.position.z - 0.15f - this.gameObject.transform.position.z)/enemy.speed;
+			float enemyFrame = (float)System.Math.Floor((collider.gameObject.transform.position.z - 0.15f - this.gameObject.transform.position.z)/enemy.speed);
 
 			ComeObject obj = new ComeObject(JUMPdisList,SLIDEdisList,enemyFrame);
 			objectList.Add(obj);
