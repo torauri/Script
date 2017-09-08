@@ -45,16 +45,15 @@ public class Demo2controller : MonoBehaviour {
 		}
 		toFrame = new Schedule(0,RUN);
 		anim.Play("RUN",0);
-
 	}
 
 	// Update is called once per frame
-	void Update () {
+	void FixedUpdate () {
 		frameCount +=1;
-		Debug.Log("Frame:"+frameCount.ToString() +" TimeLineCount:"+toFrame.GetFrame().ToString());
+		Debug.Log("Frame:"+frameCount.ToString() +" TimeLineCount:"+TimeLine.Count.ToString());
 
 
-		if(toFrame.GetStart() != "" && frameCount - toFrame.GetFrame()>=0 && frameCount - toFrame.GetFrame()<2){
+		if(toFrame.GetStart() != "" && frameCount - toFrame.GetFrame()==0){
 			Debug.Log("play:"+toFrame.GetStart());
 			anim.Play(toFrame.GetStart(),0);
 		}
@@ -64,11 +63,12 @@ public class Demo2controller : MonoBehaviour {
 				TimeLine.RemoveAt(0);
 			}
 		}
+
 	}
 
 	void OnTriggerEnter(Collider collider){
 		if(collider.gameObject.tag=="Enemy"){
-			float[,] enemyArea = EnemyArea(collider.gameObject.transform.position.x,collider.gameObject.transform.position.y,3f,0.5f);
+			float[,] enemyArea = EnemyArea(collider.gameObject.transform.position.x,collider.gameObject.transform.position.y,3f,1f);
 			float[] JUMPdisList = new float[JUMP.Count];
 			int i=0;
 			foreach(ActPosition2 a in JUMP){
@@ -107,10 +107,19 @@ public class Demo2controller : MonoBehaviour {
 
 	void ReScheduling(ComeObject obj){
 		List<Schedule> start = obj.ActTiming(JUMP,SLIDE,frameCount);
-		Debug.Log(TimeLine.Count);
 		if(start[0].GetFrame()>TimeLine[TimeLine.Count-1].GetFrame()){
 			TimeLine.AddRange(start);
 		}else{
+			 ActPosition2 afterAct = TimeLine[obj.GetTiming()].GetAct();
+			 afterAct.DebugSphere();
+			 Debug.Log("afterAct:"+afterAct.GetName()+afterAct.GetFrame().ToString());
+			 float afterDis;
+			 afterDis = obj.GetDis(afterAct.GetName(),afterAct.GetFrame()/2);
+			 Debug.Log(afterDis);
+			 if(afterDis >0){
+				 Debug.Log("NoChange");
+				 return;
+			 }
 
 		}
 	}
@@ -149,7 +158,7 @@ public class Demo2controller : MonoBehaviour {
 public class ActPosition2{
 	string name = "";
 	int frame = 0;
-	//int maxFrame = 0;
+
 	float[,] position6 = new float[6,2];
 	//Hip:0 LeftFoot:1 LeftHand:2 Head:3 RightHand:4 RightFoot:5
 
@@ -157,12 +166,6 @@ public class ActPosition2{
 		string filename = System.IO.Path.GetFileNameWithoutExtension(pass);
 		name = filename.Substring(0,filename.Length-2);
 		frame = int.Parse(filename.Substring(filename.Length-2));
-		/*
-		if(name == "JUMP"){
-			maxFrame = 56;
-		}else{
-			maxFrame = 40;
-		}*/
 
 		StreamReader sr = new StreamReader(pass);
 		string strStream = sr.ReadToEnd();
@@ -215,7 +218,8 @@ public class ActPosition2{
 	}
 
 	public float AreaChecker(float[,] enemy){
-		float r = 1f;
+
+		float r = 1.2f;
 		for(int i=0;i<5;i++){
 			Vector2[] v = new Vector2[4];
 			Vector2[] m = new Vector2[4];
@@ -246,12 +250,22 @@ public class ActPosition2{
 			dis += new Vector2(position6[i,0]-posx,position6[i,1]-posy).magnitude;
 		}
 		return dis;
+
 	}
+
 	float gaiseki(Vector2 a,Vector2 b){
 		return (float)(a.x*b.y - b.x*a.y);
 	}
 	float square(float x){
 		return x*x;
+	}
+
+	public void DebugSphere(){
+		for(int i=0;i<6;i++){
+			GameObject sphere = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+			sphere.transform.position = new Vector3 (position6[i,0], position6[i,1], 0);
+			sphere.transform.localScale = new Vector3 (0.5f,0.5f,0.5f);
+		}
 	}
 
 }
@@ -275,6 +289,15 @@ public class ComeObject{
 		return comeTiming;
 	}
 
+	public float GetDis(string name,int i){
+		if(name == "JUMP"){
+			return JUMPdisList[i];
+		}else if(name == "SLIDE"){
+			return SLIDEdisList[i];
+		}
+		return 0;
+	}
+
 	public List<Schedule> ActTiming(List<ActPosition2> j,List<ActPosition2> s,int f){
 		int maxJ = 0;
 		List<Schedule> result = new List<Schedule>();
@@ -295,12 +318,14 @@ public class ComeObject{
 			Debug.Log("JUMP!");
 			for(int i=0;i<j.Count;i++){
 				result.Add(new Schedule(f+comeTiming-j[maxJ].GetFrame()+(i*2),j[i]));
+				result.Add(new Schedule(f+comeTiming-j[maxJ].GetFrame()+(i*2)+1,j[i]));
 			}
 			return result;
 		}else{
 			Debug.Log("SLIDE!");
 			for(int i=0;i<s.Count;i++){
 				result.Add(new Schedule(f+comeTiming-s[maxS].GetFrame()+(i*2),s[i]));
+				result.Add(new Schedule(f+comeTiming-j[maxJ].GetFrame()+(i*2)+1,j[i]));
 			}
 			return result;
 		}
@@ -325,6 +350,10 @@ public class Schedule{
 
 	public float GetFrame(){
 		return frame;
+	}
+
+	public ActPosition2 GetAct(){
+		return act;
 	}
 
 }
