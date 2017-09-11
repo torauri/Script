@@ -14,7 +14,6 @@ public class Demo2controller : MonoBehaviour {
 	private int frameCount;
 	private List<ComeObject> objectList = new List<ComeObject>();
 	private List<Schedule> TimeLine = new List<Schedule>();
-	private Schedule toFrame;
 
 
 	// Use this for initialization
@@ -43,7 +42,6 @@ public class Demo2controller : MonoBehaviour {
 				}
 			}
 		}
-		toFrame = new Schedule(0,RUN);
 		anim.Play("RUN",0);
 	}
 
@@ -52,14 +50,13 @@ public class Demo2controller : MonoBehaviour {
 		frameCount +=1;
 		Debug.Log("Frame:"+frameCount.ToString() +" TimeLineCount:"+TimeLine.Count.ToString());
 
-
-		if(toFrame.GetStart() != "" && frameCount - toFrame.GetFrame()==0){
-			Debug.Log("play:"+toFrame.GetStart());
-			anim.Play(toFrame.GetStart(),0);
-		}
 		if(TimeLine.Count > 0){
-			if(toFrame.GetFrame() < frameCount){
-				toFrame = TimeLine[0];
+			 if(frameCount - TimeLine[0].GetStart()>=0 && frameCount - TimeLine[0].GetStart()<=1){
+				Debug.Log("play:"+TimeLine[0].GetStart());
+				anim.Play(TimeLine[0].GetAction(),0);
+			 }
+
+			if(TimeLine[0].GetEnd() <= frameCount){
 				TimeLine.RemoveAt(0);
 			}
 		}
@@ -68,7 +65,7 @@ public class Demo2controller : MonoBehaviour {
 
 	void OnTriggerEnter(Collider collider){
 		if(collider.gameObject.tag=="Enemy"){
-			float[,] enemyArea = EnemyArea(collider.gameObject.transform.position.x,collider.gameObject.transform.position.y,3f,1f);
+			float[,] enemyArea = EnemyArea(collider.gameObject.transform.position.x,collider.gameObject.transform.position.y,3f,0.3f);
 			float[] JUMPdisList = new float[JUMP.Count];
 			int i=0;
 			foreach(ActPosition2 a in JUMP){
@@ -86,7 +83,7 @@ public class Demo2controller : MonoBehaviour {
 			Demo2enemy enemy = collider.gameObject.GetComponent<Demo2enemy>();
 			int enemyFrame = (int)((collider.gameObject.transform.position.z - 0.15f - this.gameObject.transform.position.z)/enemy.speed);
 
-			ComeObject obj = new ComeObject(JUMPdisList,SLIDEdisList,enemyFrame);
+			ComeObject obj = new ComeObject(JUMPdisList,SLIDEdisList,enemyFrame,frameCount);
 			objectList.Add(obj);
 
 			if(TimeLine.Count == 0){
@@ -100,27 +97,27 @@ public class Demo2controller : MonoBehaviour {
 
 	void Scheduling(ComeObject obj){
 
-		List<Schedule> start = obj.ActTiming(JUMP,SLIDE,frameCount);
-		TimeLine.AddRange(start);
+		Schedule start = obj.ActTiming(JUMP,SLIDE,frameCount);
+		TimeLine.Add(start);
 
 	}
 
 	void ReScheduling(ComeObject obj){
-		List<Schedule> start = obj.ActTiming(JUMP,SLIDE,frameCount);
-		if(start[0].GetFrame()>TimeLine[TimeLine.Count-1].GetFrame()){
-			TimeLine.AddRange(start);
+		Schedule start = obj.ActTiming(JUMP,SLIDE,frameCount);
+		if(start.GetStart()>TimeLine[TimeLine.Count-1].GetEnd()){
+			TimeLine.Add(start);
 		}else{
-			 ActPosition2 afterAct = TimeLine[obj.GetTiming()].GetAct();
-			 afterAct.DebugSphere();
-			 Debug.Log("afterAct:"+afterAct.GetName()+afterAct.GetFrame().ToString());
-			 float afterDis;
-			 afterDis = obj.GetDis(afterAct.GetName(),afterAct.GetFrame()/2);
-			 Debug.Log(afterDis);
-			 if(afterDis >0){
-				 Debug.Log("NoChange");
-				 return;
-			 }
-
+			Debug.Log("matchng");
+			int timingDis = obj.GetFrame() - objectList[objectList.Count-2].GetFrame();
+			Debug.Log(timingDis);
+			if(obj.JUMPTime()>=timingDis && objectList[objectList.Count-2].JUMPTime()>=timingDis){
+				Debug.Log("ALLJUMP");
+				Debug.Log(obj.JUMPTime());
+			}
+			if(obj.SLIDETime()>=timingDis && objectList[objectList.Count-2].SLIDETime()>=timingDis){
+				Debug.Log("AllSlide");
+				Debug.Log(obj.SLIDETime());
+			}
 		}
 	}
 
@@ -219,23 +216,23 @@ public class ActPosition2{
 
 	public float AreaChecker(float[,] enemy){
 
-		float r = 1.2f;
+		float r = 0.3f;
 		for(int i=0;i<5;i++){
 			Vector2[] v = new Vector2[4];
 			Vector2[] m = new Vector2[4];
 			bool flag = true;
 			for(int j=0;j<4;j++){
-				v[j] = new Vector2(enemy[(j+1)%4,0]-enemy[j%4,0],enemy[(j+1)%4,1]-enemy[j%4,1]);
-				m[j] = new Vector2(position6[i,0]-enemy[j%4,0],position6[i,1]-enemy[j%4,1]);
+				v[j] = new Vector2(enemy[(j+1)%4,0]-enemy[j,0],enemy[(j+1)%4,1]-enemy[j,1]);
+				m[j] = new Vector2(position6[i,0]-enemy[j,0],position6[i,1]-enemy[j,1]);
 			}
 			for(int j=0;j<4;j++){
-				if(Vector2.Dot(v[j],m[j])<=0 && Vector2.Dot(v[j],m[(j+1)%4])>=0 && System.Math.Abs(gaiseki(v[j],m[j]))/v[j].magnitude <= r){
+				if(Vector2.Dot(v[j],m[j])>=0 && Vector2.Dot(v[j],m[(j+1)%4])<=0 && System.Math.Abs(gaiseki(v[j],m[j]))/v[j].magnitude <= r){
 					return 0;
 				}
 				if(square(position6[i,0]-enemy[j,0]) + square(position6[i,1]-enemy[j,1]) <= square(r) || square(position6[i,0]-enemy[(j+1)%4,0]) + square(position6[i,1]-enemy[(j+1)%4,1]) <= square(r)){
 					return 0;
 				}
-				if(gaiseki(v[j],m[j])>0){
+				if(gaiseki(v[j],m[j])<0){
 					flag = false;
 				}
 			}
@@ -274,19 +271,25 @@ public class ComeObject{
 	float[] JUMPdisList ;
 	float[] SLIDEdisList;
 	int comeTiming;
+	int comeFrame;
 
-	public ComeObject(float[] j,float[] s,int t){
+	public ComeObject(float[] j,float[] s,int t,int f){
 		JUMPdisList = new float[j.Length];
 		SLIDEdisList = new float[s.Length];
 
 		j.CopyTo(JUMPdisList,0);
 		s.CopyTo(SLIDEdisList,0);
 		comeTiming = t;
+		comeFrame = f+t;
 		Debug.Log(comeTiming);
 	}
 
 	public int GetTiming(){
 		return comeTiming;
+	}
+
+	public int GetFrame(){
+		return comeFrame;
 	}
 
 	public float GetDis(string name,int i){
@@ -298,9 +301,29 @@ public class ComeObject{
 		return 0;
 	}
 
-	public List<Schedule> ActTiming(List<ActPosition2> j,List<ActPosition2> s,int f){
+	public int JUMPTime(){
+		int t=0;
+		for(int i=0;i<JUMPdisList.Length;i++){
+			if(JUMPdisList[i]>0){
+				t++;
+			}
+		}
+		return t*2;
+	}
+
+	public int SLIDETime(){
+		int t=0;
+		for(int i=0;i<SLIDEdisList.Length;i++){
+			if(SLIDEdisList[i]>0){
+				t++;
+			}
+		}
+		return t*2;
+	}
+
+	public Schedule ActTiming(List<ActPosition2> j,List<ActPosition2> s,int f){
 		int maxJ = 0;
-		List<Schedule> result = new List<Schedule>();
+		Schedule result;
 		for(int i=0;i<JUMPdisList.Length;i++){
 			if(JUMPdisList[i]>JUMPdisList[maxJ]){
 				maxJ = i;
@@ -316,44 +339,40 @@ public class ComeObject{
 
 		if(JUMPdisList[maxJ]>=SLIDEdisList[maxS]){
 			Debug.Log("JUMP!");
-			for(int i=0;i<j.Count;i++){
-				result.Add(new Schedule(f+comeTiming-j[maxJ].GetFrame()+(i*2),j[i]));
-				result.Add(new Schedule(f+comeTiming-j[maxJ].GetFrame()+(i*2)+1,j[i]));
-			}
+			result = new Schedule(f+comeTiming-j[maxJ].GetFrame(),56,"JUMP");
 			return result;
 		}else{
 			Debug.Log("SLIDE!");
-			for(int i=0;i<s.Count;i++){
-				result.Add(new Schedule(f+comeTiming-s[maxS].GetFrame()+(i*2),s[i]));
-				result.Add(new Schedule(f+comeTiming-j[maxJ].GetFrame()+(i*2)+1,j[i]));
-			}
+			result = new Schedule(f+comeTiming-s[maxS].GetFrame(),40,"SLIDE");
 			return result;
 		}
 	}
 }
 
 public class Schedule{
-	int frame;
-	ActPosition2 act;
-	string StartAction = "";
-	public Schedule(int f,ActPosition2 a){
-		frame = f;
-		act = a;
-		if(act.GetFrame() == 0){
-			StartAction = act.GetName();
-		}
+	int startFrame;
+	int length;
+	string action = "";
+	public Schedule(int f,int l,string act){
+		startFrame = f;
+		length = l;
+		action = act;
 	}
 
-	public string GetStart(){
-		return StartAction;
+	public int GetStart(){
+		return startFrame;
 	}
 
-	public float GetFrame(){
-		return frame;
+	public int GetLength(){
+		return length;
 	}
 
-	public ActPosition2 GetAct(){
-		return act;
+	public int GetEnd(){
+		return startFrame + length;
+	}
+
+	public string GetAction(){
+		return action;
 	}
 
 }
