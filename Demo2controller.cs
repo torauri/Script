@@ -48,11 +48,11 @@ public class Demo2controller : MonoBehaviour {
 	// Update is called once per frame
 	void FixedUpdate () {
 		frameCount +=1;
-		Debug.Log("Frame:"+frameCount.ToString() +" TimeLineCount:"+TimeLine.Count.ToString());
+		//Debug.Log("Frame:"+frameCount.ToString());
 
 		if(TimeLine.Count > 0){
-			 if(frameCount - TimeLine[0].GetStart()>=0 && frameCount - TimeLine[0].GetStart()<=1){
-				Debug.Log("play:"+TimeLine[0].GetStart());
+			 if(frameCount - TimeLine[0].GetStart()==0 ){
+				Debug.Log("play:"+TimeLine[0].GetAction());
 				anim.Play(TimeLine[0].GetAction(),0);
 			 }
 
@@ -65,7 +65,7 @@ public class Demo2controller : MonoBehaviour {
 
 	void OnTriggerEnter(Collider collider){
 		if(collider.gameObject.tag=="Enemy"){
-			float[,] enemyArea = EnemyArea(collider.gameObject.transform.position.x,collider.gameObject.transform.position.y,3f,0.3f);
+			float[,] enemyArea = EnemyArea(collider.gameObject.transform.position.x,collider.gameObject.transform.position.y,2f,0.3f);
 			float[] JUMPdisList = new float[JUMP.Count];
 			int i=0;
 			foreach(ActPosition2 a in JUMP){
@@ -109,14 +109,20 @@ public class Demo2controller : MonoBehaviour {
 		}else{
 			Debug.Log("matchng");
 			int timingDis = obj.GetFrame() - objectList[objectList.Count-2].GetFrame();
-			Debug.Log(timingDis);
 			if(obj.JUMPTime()>=timingDis && objectList[objectList.Count-2].JUMPTime()>=timingDis){
 				Debug.Log("ALLJUMP");
-				Debug.Log(obj.JUMPTime());
-			}
-			if(obj.SLIDETime()>=timingDis && objectList[objectList.Count-2].SLIDETime()>=timingDis){
+				int AllJUMPframe = 0;
+				for(int i=0;i<JUMP.Count-timingDis/2;i++){
+					if(objectList[objectList.Count-2].GetDis("JUMP",i)>0 && obj.GetDis("JUMP",i+timingDis/2) > 0){
+						AllJUMPframe = i*2;
+						break;
+					}
+				}
+				TimeLine[TimeLine.Count-1].ReSet("JUMP",objectList[objectList.Count-2].GetFrame()-AllJUMPframe);
+				return;
+
+			}else if(obj.SLIDETime()>=timingDis && objectList[objectList.Count-2].SLIDETime()>=timingDis){
 				Debug.Log("AllSlide");
-				Debug.Log(obj.SLIDETime());
 			}
 		}
 	}
@@ -216,8 +222,8 @@ public class ActPosition2{
 
 	public float AreaChecker(float[,] enemy){
 
-		float r = 0.3f;
-		for(int i=0;i<5;i++){
+		float r = 0.5f;
+		for(int i=0;i<6;i++){
 			Vector2[] v = new Vector2[4];
 			Vector2[] m = new Vector2[4];
 			bool flag = true;
@@ -226,13 +232,13 @@ public class ActPosition2{
 				m[j] = new Vector2(position6[i,0]-enemy[j,0],position6[i,1]-enemy[j,1]);
 			}
 			for(int j=0;j<4;j++){
-				if(Vector2.Dot(v[j],m[j])>=0 && Vector2.Dot(v[j],m[(j+1)%4])<=0 && System.Math.Abs(gaiseki(v[j],m[j]))/v[j].magnitude <= r){
+				if(Vector2.Dot(v[j],m[j])>=0 && Vector2.Dot(v[j],m[(j+1)%4])<=0 && System.Math.Abs(Cross(v[j],m[j]))/v[j].magnitude <= r){
 					return 0;
 				}
 				if(square(position6[i,0]-enemy[j,0]) + square(position6[i,1]-enemy[j,1]) <= square(r) || square(position6[i,0]-enemy[(j+1)%4,0]) + square(position6[i,1]-enemy[(j+1)%4,1]) <= square(r)){
 					return 0;
 				}
-				if(gaiseki(v[j],m[j])<0){
+				if(Cross(v[j],m[j])<0){
 					flag = false;
 				}
 			}
@@ -250,7 +256,7 @@ public class ActPosition2{
 
 	}
 
-	float gaiseki(Vector2 a,Vector2 b){
+	float Cross(Vector2 a,Vector2 b){
 		return (float)(a.x*b.y - b.x*a.y);
 	}
 	float square(float x){
@@ -357,10 +363,22 @@ public class Schedule{
 		startFrame = f;
 		length = l;
 		action = act;
+		Debug.Log("start"+startFrame);
 	}
 
 	public int GetStart(){
 		return startFrame;
+	}
+
+	public void ReSet(string s,int f){
+		startFrame = f;
+		action = s;
+		Debug.Log("reset" + f);
+		if(s == "JUMP"){
+			length=56;
+		}else{
+			length=40;
+		}
 	}
 
 	public int GetLength(){
