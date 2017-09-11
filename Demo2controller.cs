@@ -22,7 +22,7 @@ public class Demo2controller : MonoBehaviour {
 		frameCount = 0;
 
 
-		string[] files = System.IO.Directory.GetFiles(Application.dataPath + "/Analys6Position/","*",System.IO.SearchOption.TopDirectoryOnly);
+		string[] files = System.IO.Directory.GetFiles(Application.dataPath + "/Analys7Position/","*",System.IO.SearchOption.TopDirectoryOnly);
 
 		foreach(string s in files){
 			if(s.IndexOf(".meta")<0){
@@ -36,9 +36,6 @@ public class Demo2controller : MonoBehaviour {
 					SLIDE.Add(pos);
 					break;
 
-					case "RUN":
-					RUN = pos;
-					break;
 				}
 			}
 		}
@@ -162,7 +159,7 @@ public class ActPosition2{
 	string name = "";
 	int frame = 0;
 
-	float[,] position6 = new float[6,2];
+	float[,] position7 = new float[7,2];
 	//Hip:0 LeftFoot:1 LeftHand:2 Head:3 RightHand:4 RightFoot:5
 
 	public ActPosition2(string pass){
@@ -180,33 +177,38 @@ public class ActPosition2{
 
 			switch(splitedData[0]){
 				case "Head":
-				position6[3,0]=float.Parse(splitedData[1]);
-				position6[3,1]=float.Parse(splitedData[2]);
+				position7[3,0]=float.Parse(splitedData[1]);
+				position7[3,1]=float.Parse(splitedData[2]);
 				break;
 
 				case "Hip":
-				position6[0,0]=float.Parse(splitedData[1]);
-				position6[0,1]=float.Parse(splitedData[2]);
+				position7[0,0]=float.Parse(splitedData[1]);
+				position7[0,1]=float.Parse(splitedData[2]);
 				break;
 
 				case "LeftHand":
-				position6[2,0]=float.Parse(splitedData[1]);
-				position6[2,1]=float.Parse(splitedData[2]);
+				position7[2,0]=float.Parse(splitedData[1]);
+				position7[2,1]=float.Parse(splitedData[2]);
 				break;
 
 				case "RightHand":
-				position6[4,0]=float.Parse(splitedData[1]);
-				position6[4,1]=float.Parse(splitedData[2]);
+				position7[4,0]=float.Parse(splitedData[1]);
+				position7[4,1]=float.Parse(splitedData[2]);
 				break;
 
 				case "LeftFoot":
-				position6[1,0]=float.Parse(splitedData[1]);
-				position6[1,1]=float.Parse(splitedData[2]);
+				position7[1,0]=float.Parse(splitedData[1]);
+				position7[1,1]=float.Parse(splitedData[2]);
 				break;
 
 				case "RightFoot":
-				position6[5,0]=float.Parse(splitedData[1]);
-				position6[5,1]=float.Parse(splitedData[2]);
+				position7[5,0]=float.Parse(splitedData[1]);
+				position7[5,1]=float.Parse(splitedData[2]);
+				break;
+
+				case "Body":
+				position7[6,0]=float.Parse(splitedData[1]);
+				position7[6,1]=float.Parse(splitedData[2]);
 				break;
 			}
 		}
@@ -222,20 +224,20 @@ public class ActPosition2{
 
 	public float AreaChecker(float[,] enemy){
 
-		float r = 0.5f;
-		for(int i=0;i<6;i++){
+		float r = 0.15f;
+		for(int i=0;i<7;i++){
 			Vector2[] v = new Vector2[4];
 			Vector2[] m = new Vector2[4];
 			bool flag = true;
 			for(int j=0;j<4;j++){
 				v[j] = new Vector2(enemy[(j+1)%4,0]-enemy[j,0],enemy[(j+1)%4,1]-enemy[j,1]);
-				m[j] = new Vector2(position6[i,0]-enemy[j,0],position6[i,1]-enemy[j,1]);
+				m[j] = new Vector2(position7[i,0]-enemy[j,0],position7[i,1]-enemy[j,1]);
 			}
 			for(int j=0;j<4;j++){
 				if(Vector2.Dot(v[j],m[j])>=0 && Vector2.Dot(v[j],m[(j+1)%4])<=0 && System.Math.Abs(Cross(v[j],m[j]))/v[j].magnitude <= r){
 					return 0;
 				}
-				if(square(position6[i,0]-enemy[j,0]) + square(position6[i,1]-enemy[j,1]) <= square(r) || square(position6[i,0]-enemy[(j+1)%4,0]) + square(position6[i,1]-enemy[(j+1)%4,1]) <= square(r)){
+				if(square(position7[i,0]-enemy[j,0]) + square(position7[i,1]-enemy[j,1]) <= square(r) || square(position7[i,0]-enemy[(j+1)%4,0]) + square(position7[i,1]-enemy[(j+1)%4,1]) <= square(r)){
 					return 0;
 				}
 				if(Cross(v[j],m[j])<0){
@@ -250,7 +252,7 @@ public class ActPosition2{
 		float posx = (enemy[0,0]+enemy[2,0])/2f;
 		float posy = (enemy[0,1]+enemy[2,1])/2f;
 		for(int i=0;i<5;i++){
-			dis += new Vector2(position6[i,0]-posx,position6[i,1]-posy).magnitude;
+			dis += new Vector2(position7[i,0]-posx,position7[i,1]-posy).magnitude;
 		}
 		return dis;
 
@@ -266,7 +268,7 @@ public class ActPosition2{
 	public void DebugSphere(){
 		for(int i=0;i<6;i++){
 			GameObject sphere = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-			sphere.transform.position = new Vector3 (position6[i,0], position6[i,1], 0);
+			sphere.transform.position = new Vector3 (position7[i,0], position7[i,1], 0);
 			sphere.transform.localScale = new Vector3 (0.5f,0.5f,0.5f);
 		}
 	}
