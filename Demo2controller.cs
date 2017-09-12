@@ -45,12 +45,12 @@ public class Demo2controller : MonoBehaviour {
 	// Update is called once per frame
 	void FixedUpdate () {
 		frameCount +=1;
-		//Debug.Log("Frame:"+frameCount.ToString());
 
 		if(TimeLine.Count > 0){
-			 if(frameCount - TimeLine[0].GetStart()==0 ){
-				Debug.Log("play:"+TimeLine[0].GetAction());
-				anim.Play(TimeLine[0].GetAction(),0);
+			 if(frameCount - TimeLine[0].GetStart()>=0 &&  TimeLine[0].GetFlag()){
+					Debug.Log("Play:"+TimeLine[0].GetAction());
+					anim.Play(TimeLine[0].GetAction(),0);
+					TimeLine[0].SetFlag(frameCount);
 			 }
 
 			if(TimeLine[0].GetEnd() <= frameCount){
@@ -103,7 +103,6 @@ public class Demo2controller : MonoBehaviour {
 		Schedule start = obj.ActTiming(JUMP,SLIDE,frameCount);
 		if(start.GetStart()>TimeLine[TimeLine.Count-1].GetEnd()){
 			TimeLine.Add(start);
-			return;
 		}else{
 			Debug.Log("matchng");
 			int timingDis = obj.GetFrame() - objectList[objectList.Count-2].GetFrame();
@@ -136,6 +135,24 @@ public class Demo2controller : MonoBehaviour {
 					return;
 				}
 			}
+			/*タイミング調整*/
+				int t=0;
+				for(int i=0;i<TimeLine[TimeLine.Count-1].GetStart()-frameCount;i++){
+					Debug.Log(obj.GetFrame() + ":" +(TimeLine[TimeLine.Count-1].GetEnd()+obj.GetDisStart(start.GetAction())-i));
+					Debug.Log(objectList[objectList.Count-2].GetFrame() +":"+ (TimeLine[TimeLine.Count-1].GetStart()+objectList[objectList.Count-2].GetDisEnd(TimeLine[TimeLine.Count-1].GetAction())-i));
+					if(obj.GetFrame()>TimeLine[TimeLine.Count-1].GetEnd()+obj.GetDisStart(start.GetAction())-i && objectList[objectList.Count-2].GetFrame() <= TimeLine[TimeLine.Count-1].GetStart()+objectList[objectList.Count-2].GetDisEnd(TimeLine[TimeLine.Count-1].GetAction())-i){
+						Debug.Log("成功");
+						t=i;
+						break;
+					}
+				}
+				Debug.Log("TimingTune:"+t);
+				TimeLine[TimeLine.Count-1].ReSetTiming(TimeLine[TimeLine.Count-1].GetStart()-t);
+				start.ReSetTiming(TimeLine[TimeLine.Count-1].GetEnd()-t);
+				TimeLine.Add(start);
+				return;
+
+
 		}
 	}
 
@@ -304,7 +321,6 @@ public class ComeObject{
 		s.CopyTo(SLIDEdisList,0);
 		comeTiming = t;
 		comeFrame = f+t;
-		Debug.Log(comeTiming);
 	}
 
 	public int GetTiming(){
@@ -324,11 +340,48 @@ public class ComeObject{
 		return 0;
 	}
 
+	public int GetDisStart(string s){
+		if(s=="JUMP"){
+			for(int i=0;i<JUMPdisList.Length;i++){
+				if(JUMPdisList[i]>0) return i*2;
+			}
+		}else{
+			for(int i=0;i<SLIDEdisList.Length;i++){
+				if(SLIDEdisList[i]>0) return i*2;
+			}
+		}
+		return 0;
+	}
+
+	public int GetDisEnd(string s){
+		int t=0;
+		if(s=="JUMP"){
+			for(int i=8;i<JUMPdisList.Length;i++){
+				if(JUMPdisList[i]>0){
+					t=i*2;
+				}else if(t>0){
+					break;
+				}
+			}
+		}else{
+			for(int i=0;i<SLIDEdisList.Length;i++){
+				if(SLIDEdisList[i]>0){
+					t=i*2;
+				}else if(t>0){
+					break;
+				}
+			}
+		}
+		return t;
+	}
+
 	public int JUMPTime(){
 		int t=0;
 		for(int i=0;i<JUMPdisList.Length;i++){
 			if(JUMPdisList[i]>0){
 				t++;
+			}else if(t>0){
+				break;
 			}
 		}
 		return t*2;
@@ -339,6 +392,8 @@ public class ComeObject{
 		for(int i=0;i<SLIDEdisList.Length;i++){
 			if(SLIDEdisList[i]>0){
 				t++;
+			}else if(t>0){
+				break;
 			}
 		}
 		return t*2;
@@ -361,11 +416,11 @@ public class ComeObject{
 		}
 
 		if(JUMPdisList[maxJ]>=SLIDEdisList[maxS]){
-			Debug.Log("JUMP!");
+			Debug.Log("JUMP!"+GetDisStart("JUMP")+":"+GetDisEnd("JUMP"));
 			result = new Schedule(f+comeTiming-j[maxJ].GetFrame(),56,"JUMP");
 			return result;
 		}else{
-			Debug.Log("SLIDE!");
+			Debug.Log("SLIDE!"+GetDisStart("SLIDE")+":"+GetDisEnd("SLIDE"));
 			result = new Schedule(f+comeTiming-s[maxS].GetFrame(),40,"SLIDE");
 			return result;
 		}
@@ -376,15 +431,25 @@ public class Schedule{
 	int startFrame;
 	int length;
 	string action = "";
+	bool flag;
 	public Schedule(int f,int l,string act){
 		startFrame = f;
 		length = l;
 		action = act;
-		Debug.Log("start"+startFrame);
+		flag = true;
 	}
 
 	public int GetStart(){
 		return startFrame;
+	}
+
+	public bool GetFlag(){
+		return flag;
+	}
+
+	public void SetFlag(int f){
+		flag = false;
+		startFrame = f;
 	}
 
 	public void ReSet(string s,int f){
@@ -396,6 +461,10 @@ public class Schedule{
 		}else{
 			length=40;
 		}
+	}
+
+	public void ReSetTiming(int s){
+		startFrame = s;
 	}
 
 	public int GetLength(){
