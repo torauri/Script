@@ -149,11 +149,13 @@ public class Demo2controller : MonoBehaviour {
 					}
 				}
 				Debug.Log("TimingTune:"+t);
+				if(t>0){
 				TimeLine[TimeLine.Count-1].ReSetTiming(TimeLine[TimeLine.Count-1].GetStart()-t);
 				start.ReSetTiming(TimeLine[TimeLine.Count-1].GetEnd()-t);
 				TimeLine.Add(start);
 				return;
-
+			}
+			Debug.Log("無理"+obj.GetFrame());
 
 		}
 	}
@@ -336,9 +338,9 @@ public class ComeObject{
 	}
 
 	public float GetDis(string name,int i){
-		if(name == "JUMP"){
+		if(name == "JUMP" && i<JUMPdisList.Length && i >= 0){
 			return JUMPdisList[i];
-		}else if(name == "SLIDE"){
+		}else if(name == "SLIDE" && i<SLIDEdisList.Length && i >= 0){
 			return SLIDEdisList[i];
 		}
 		return 0;
