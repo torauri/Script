@@ -21,7 +21,7 @@ public class Demo2controller : MonoBehaviour {
 		anim = GetComponent<Animator>();
 		frameCount = 0;
 
-
+/*アニメーションのデータの読み取り*/
 		string[] files = System.IO.Directory.GetFiles(Application.dataPath + "/Analys7Position/","*",System.IO.SearchOption.TopDirectoryOnly);
 
 		foreach(string s in files){
@@ -45,7 +45,7 @@ public class Demo2controller : MonoBehaviour {
 	// Update is called once per frame
 	void FixedUpdate () {
 		frameCount +=1;
-
+		/*1フレームごとの処理。TimeLineを参照しながらアニメーションの開始や過ぎたScheduleの削除*/
 		if(TimeLine.Count > 0){
 			 if(frameCount - TimeLine[0].GetStart()>=0 &&  TimeLine[0].GetFlag()){
 					Debug.Log("Play:"+TimeLine[0].GetAction());
@@ -62,6 +62,7 @@ public class Demo2controller : MonoBehaviour {
 
 	void OnTriggerEnter(Collider collider){
 		if(collider.gameObject.tag=="Enemy"){
+			/*物体の検知時、物体の範囲測定、各disListの作成*/
 			float[,] enemyArea = EnemyArea(collider.gameObject.transform.position.x,collider.gameObject.transform.position.y,2f,0.3f);
 			float[] JUMPdisList = new float[JUMP.Count];
 			int i=0;
@@ -76,13 +77,13 @@ public class Demo2controller : MonoBehaviour {
 				SLIDEdisList[i]=a.AreaChecker(enemyArea);
 				i++;
 			}
-
+			/*物体のスピードを参照し、disList、物体が来るまでのフレーム、検知した時のフレームをobjectListへ*/
 			Demo2enemy enemy = collider.gameObject.GetComponent<Demo2enemy>();
 			int enemyFrame = (int)((collider.gameObject.transform.position.z - 0.15f - this.gameObject.transform.position.z)/enemy.speed);
 
 			ComeObject obj = new ComeObject(JUMPdisList,SLIDEdisList,enemyFrame,frameCount);
 			objectList.Add(obj);
-
+			/*TimeLineを参照しScheduleがあるかないかによりわける*/
 			if(TimeLine.Count == 0){
 				Scheduling(objectList[objectList.Count-1]);
 			}else{
@@ -91,21 +92,24 @@ public class Demo2controller : MonoBehaviour {
 
 		}
 	}
-
+	/*Scheduleがないとき、そのままScheduleをTimeLineへ送る*/
 	void Scheduling(ComeObject obj){
 
 		Schedule start = obj.ActTiming(JUMP,SLIDE,frameCount);
 		TimeLine.Add(start);
 
 	}
-
+	/*Scheduleがあるとき、すでに入っているScheduleと比較して処理*/
 	void ReScheduling(ComeObject obj){
 		Schedule start = obj.ActTiming(JUMP,SLIDE,frameCount);
 		if(start.GetStart()>TimeLine[TimeLine.Count-1].GetEnd()){
+			/*すでに入っているScheduleと干渉しないとき、そのままScheduleを送る*/
 			TimeLine.Add(start);
 		}else{
+			/*すでに入っているScheduleと干渉するとき*/
 			Debug.Log("matchng");
 			int timingDis = obj.GetFrame() - objectList[objectList.Count-2].GetFrame();
+			/*一気に跳べるかの判断、とべると判断したときはdisListをチェックしながらタイミング検索、ここで出なかったら次へ*/
 			if(obj.JUMPTime()>=timingDis && objectList[objectList.Count-2].JUMPTime()>=timingDis){
 				Debug.Log("ALLJUMP");
 				int AllJUMPframe = 0;
@@ -119,8 +123,8 @@ public class Demo2controller : MonoBehaviour {
 					TimeLine[TimeLine.Count-1].ReSet("JUMP",objectList[objectList.Count-2].GetFrame()-AllJUMPframe);
 					return;
 				}
-
 			}
+			/*一気にスライディングできるかの判断、できると判断したときはdisListをチェックしながらタイミング検索、ここで出なかったら次へ*/
 			if(obj.SLIDETime()>=timingDis && objectList[objectList.Count-2].SLIDETime()>=timingDis){
 				Debug.Log("AllSlide");
 				int AllSLIDEframe = 0;
@@ -135,7 +139,7 @@ public class Demo2controller : MonoBehaviour {
 					return;
 				}
 			}
-			/*タイミング調整*/
+			/*タイミング調整、二個目のオブジェクトの到着フレームと回避開始フレーム、一個目のオブジェクトの到着フレームと回避終了フレームの比較*/
 				int t=0;
 				for(int i=0;i<TimeLine[TimeLine.Count-1].GetStart()-frameCount;i++){
 					Debug.Log(obj.GetFrame() + ":" +(TimeLine[TimeLine.Count-1].GetEnd()+obj.GetDisStart(start.GetAction())-i));
@@ -155,7 +159,7 @@ public class Demo2controller : MonoBehaviour {
 
 		}
 	}
-
+	/*オブジェクトの座標とスケールからオブジェクトの範囲を調べる*/
 	float[,] EnemyArea(float xpos,float ypos,float xlen,float ylen){
 		float[,] result = new float[4,2];
 		result[0,0]=xpos-xlen/2f;
@@ -172,7 +176,7 @@ public class Demo2controller : MonoBehaviour {
 
 		return result;
 	}
-
+	/*配列の中で一番要素が大きいもののインデックスを返す*/
 	int maxIndex(float[] x){
 		int maxI = 0;
 		for(int i=0;i<x.Length;i++){
@@ -186,13 +190,13 @@ public class Demo2controller : MonoBehaviour {
 
 }
 
-
+/*アニメションの身体図式を格納し、身体イメージからの接触判定を行う*/
 public class ActPosition2{
 	string name = "";
 	int frame = 0;
 
 	float[,] position7 = new float[7,2];
-	//Hip:0 LeftFoot:1 LeftHand:2 Head:3 RightHand:4 RightFoot:5
+	//Hip:0 LeftFoot:1 LeftHand:2 Head:3 RightHand:4 RightFoot:5 Body:6
 
 	public ActPosition2(string pass){
 		string filename = System.IO.Path.GetFileNameWithoutExtension(pass);
@@ -254,6 +258,7 @@ public class ActPosition2{
 		return frame;
 	}
 
+	/*物体の範囲から接触するかどうかの判定を行う*/
 	public float AreaChecker(float[,] enemy){
 
 		float r = 0.15f;
@@ -307,11 +312,12 @@ public class ActPosition2{
 
 }
 
+/*迫りくる物体についての情報を格納する*/
 public class ComeObject{
 	float[] JUMPdisList ;
 	float[] SLIDEdisList;
-	int comeTiming;
-	int comeFrame;
+	int comeTiming;//検知してから何フレームでくるか
+	int comeFrame;//絶対時間で何フレームにくるか
 
 	public ComeObject(float[] j,float[] s,int t,int f){
 		JUMPdisList = new float[j.Length];
@@ -339,7 +345,7 @@ public class ComeObject{
 		}
 		return 0;
 	}
-
+	/*動作を再生して何フレーム後から回避できるか*/
 	public int GetDisStart(string s){
 		if(s=="JUMP"){
 			for(int i=0;i<JUMPdisList.Length;i++){
@@ -352,7 +358,7 @@ public class ComeObject{
 		}
 		return 0;
 	}
-
+	/*動作を再生して何フレーム後まで回避できるか*/
 	public int GetDisEnd(string s){
 		int t=0;
 		if(s=="JUMP"){
@@ -374,7 +380,7 @@ public class ComeObject{
 		}
 		return t;
 	}
-
+	/*どれだけ飛んでいられるか*/
 	public int JUMPTime(){
 		int t=0;
 		for(int i=0;i<JUMPdisList.Length;i++){
@@ -386,7 +392,7 @@ public class ComeObject{
 		}
 		return t*2;
 	}
-
+	/*どれだけしゃがんでいられるか*/
 	public int SLIDETime(){
 		int t=0;
 		for(int i=0;i<SLIDEdisList.Length;i++){
@@ -398,7 +404,7 @@ public class ComeObject{
 		}
 		return t*2;
 	}
-
+	/*DisListとフレームから一番良い動作、タイミングを検索しScheduleにする*/
 	public Schedule ActTiming(List<ActPosition2> j,List<ActPosition2> s,int f){
 		int maxJ = 0;
 		Schedule result;
@@ -427,6 +433,7 @@ public class ComeObject{
 	}
 }
 
+/*アニメーションに関して行うアニメーション、そのタイミング、長さ、再生されているかどうか*/
 public class Schedule{
 	int startFrame;
 	int length;
