@@ -103,6 +103,7 @@ public class Demo2controller : MonoBehaviour {
 		Schedule start = obj.ActTiming(JUMP,SLIDE,frameCount);
 		if(start.GetStart()>TimeLine[TimeLine.Count-1].GetEnd()){
 			TimeLine.Add(start);
+			return;
 		}else{
 			Debug.Log("matchng");
 			int timingDis = obj.GetFrame() - objectList[objectList.Count-2].GetFrame();
@@ -115,11 +116,25 @@ public class Demo2controller : MonoBehaviour {
 						break;
 					}
 				}
-				TimeLine[TimeLine.Count-1].ReSet("JUMP",objectList[objectList.Count-2].GetFrame()-AllJUMPframe);
-				return;
+				if(AllJUMPframe != 0){
+					TimeLine[TimeLine.Count-1].ReSet("JUMP",objectList[objectList.Count-2].GetFrame()-AllJUMPframe);
+					return;
+				}
 
-			}else if(obj.SLIDETime()>=timingDis && objectList[objectList.Count-2].SLIDETime()>=timingDis){
+			}
+			if(obj.SLIDETime()>=timingDis && objectList[objectList.Count-2].SLIDETime()>=timingDis){
 				Debug.Log("AllSlide");
+				int AllSLIDEframe = 0;
+				for(int i=0;i<SLIDE.Count-timingDis/2;i++){
+					if(objectList[objectList.Count-2].GetDis("SLIDE",i)>0 && obj.GetDis("SLIDE",i+timingDis/2) > 0){
+						AllSLIDEframe = i*2;
+						break;
+					}
+				}
+				if(AllSLIDEframe!=0){
+					TimeLine[TimeLine.Count-1].ReSet("SLIDE",objectList[objectList.Count-2].GetFrame()-AllSLIDEframe);
+					return;
+				}
 			}
 		}
 	}
