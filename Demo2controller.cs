@@ -142,8 +142,6 @@ public class Demo2controller : MonoBehaviour {
 			/*タイミング調整、二個目のオブジェクトの到着フレームと回避開始フレーム、一個目のオブジェクトの到着フレームと回避終了フレームの比較*/
 				int t=0;
 				for(int i=0;i<TimeLine[TimeLine.Count-1].GetStart()-frameCount;i++){
-					Debug.Log(obj.GetFrame() + ":" +(TimeLine[TimeLine.Count-1].GetEnd()+obj.GetDisStart(start.GetAction())-i));
-					Debug.Log(objectList[objectList.Count-2].GetFrame() +":"+ (TimeLine[TimeLine.Count-1].GetStart()+objectList[objectList.Count-2].GetDisEnd(TimeLine[TimeLine.Count-1].GetAction())-i));
 					if(obj.GetFrame()>TimeLine[TimeLine.Count-1].GetEnd()+obj.GetDisStart(start.GetAction())-i && objectList[objectList.Count-2].GetFrame() <= TimeLine[TimeLine.Count-1].GetStart()+objectList[objectList.Count-2].GetDisEnd(TimeLine[TimeLine.Count-1].GetAction())-i){
 						Debug.Log("成功");
 						t=i;
