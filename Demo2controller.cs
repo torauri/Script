@@ -149,7 +149,7 @@ public class Demo2controller : MonoBehaviour {
 					}
 				}
 				if(t>0){
-				Debug.Log("TimingTune:"+t)
+				Debug.Log("TimingTune:"+t);
 				TimeLine[TimeLine.Count-1].ReSetTiming(TimeLine[TimeLine.Count-1].GetStart()-t);
 				start.ReSetTiming(TimeLine[TimeLine.Count-1].GetEnd()-t);
 				TimeLine.Add(start);
