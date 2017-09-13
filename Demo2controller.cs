@@ -48,7 +48,6 @@ public class Demo2controller : MonoBehaviour {
 		/*1フレームごとの処理。TimeLineを参照しながらアニメーションの開始や過ぎたScheduleの削除*/
 		if(TimeLine.Count > 0){
 			if(frameCount - TimeLine[0].GetStart()>=0 &&  TimeLine[0].GetFlag()){
-				Debug.Log("Play:"+TimeLine[0].GetAction());
 				anim.Play(TimeLine[0].GetAction(),0);
 				TimeLine[0].SetFlag(frameCount);
 			}

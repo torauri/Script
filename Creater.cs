@@ -17,7 +17,9 @@ public class Creater : MonoBehaviour {
 		if(frame%interval==0){
 			float r=Random.Range(0.5f,1.3f);
 			GameObject enemy = Instantiate(enemyPrefab,new Vector3(transform.position.x,transform.position.y+r,transform.position.z),transform.rotation);
-			enemy.GetComponent<Demo2enemy>().speed=Random.Range(0.3f,0.5f);
+            enemy.GetComponent<Demo2enemy>().speed =Random.Range(0.3f,0.5f);
+            //interval = (int)Random.Range(30, 80);
+          //  frame = 0;
 		}
 	}
 }
