@@ -15,4 +15,14 @@ public class Demo2enemy : MonoBehaviour {
 	void FixedUpdate () {
 		transform.position=new Vector3(transform.position.x,transform.position.y,transform.position.z-speed);
 	}
+
+
+    void OnTriggerEnter(Collider collider)
+    {
+        if (collider.gameObject.tag == "analays_character")
+        {
+           // GameObject.Destroy(gameObject);
+        }
+    }
+
 }

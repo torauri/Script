@@ -21,7 +21,7 @@ public class Demo2controller : MonoBehaviour {
 		anim = GetComponent<Animator>();
 		frameCount = 0;
 
-/*アニメーションのデータの読み取り*/
+		/*アニメーションのデータの読み取り*/
 		string[] files = System.IO.Directory.GetFiles(Application.dataPath + "/Analys7Position/","*",System.IO.SearchOption.TopDirectoryOnly);
 
 		foreach(string s in files){
@@ -47,11 +47,11 @@ public class Demo2controller : MonoBehaviour {
 		frameCount +=1;
 		/*1フレームごとの処理。TimeLineを参照しながらアニメーションの開始や過ぎたScheduleの削除*/
 		if(TimeLine.Count > 0){
-			 if(frameCount - TimeLine[0].GetStart()>=0 &&  TimeLine[0].GetFlag()){
-					Debug.Log("Play:"+TimeLine[0].GetAction());
-					anim.Play(TimeLine[0].GetAction(),0);
-					TimeLine[0].SetFlag(frameCount);
-			 }
+			if(frameCount - TimeLine[0].GetStart()>=0 &&  TimeLine[0].GetFlag()){
+				Debug.Log("Play:"+TimeLine[0].GetAction());
+				anim.Play(TimeLine[0].GetAction(),0);
+				TimeLine[0].SetFlag(frameCount);
+			}
 
 			if(TimeLine[0].GetEnd() <= frameCount){
 				TimeLine.RemoveAt(0);
@@ -140,7 +140,76 @@ public class Demo2controller : MonoBehaviour {
 				}
 			}
 			/*タイミング調整、二個目のオブジェクトの到着フレームと回避開始フレーム、一個目のオブジェクトの到着フレームと回避終了フレームの比較*/
-				int t=0;
+			int t=-1;
+			for(int i=0;i<TimeLine[TimeLine.Count-1].GetStart()-frameCount;i++){
+				if(obj.GetFrame()>TimeLine[TimeLine.Count-1].GetEnd()+obj.GetDisStart(start.GetAction())-i && objectList[objectList.Count-2].GetFrame() <= TimeLine[TimeLine.Count-1].GetStart()+objectList[objectList.Count-2].GetDisEnd(TimeLine[TimeLine.Count-1].GetAction())-i){
+					Debug.Log("成功");
+					t=i;
+					break;
+				}
+			}
+			if(t>=0){
+				Debug.Log("TimingTune:"+t);
+				TimeLine[TimeLine.Count-1].ReSetTiming(TimeLine[TimeLine.Count-1].GetStart()-t);
+				start.ReSetTiming(TimeLine[TimeLine.Count-1].GetEnd()-t);
+				TimeLine.Add(start);
+				return;
+			}
+
+            /*前に行う動作を変更してタイミング調整を行う*/
+            if (TimeLine[TimeLine.Count - 1].GetAction() == "JUMP" && objectList[objectList.Count - 2].SLIDETime() > 0)
+            {
+                Debug.Log("BeforeReTune");
+                Schedule reTime = new Schedule(start.GetStart()-40,40,"SLIDE");
+                for (int i = 0; i < reTime.GetStart() - frameCount; i++)
+                {
+                    if (obj.GetFrame() > reTime.GetEnd() + obj.GetDisStart(start.GetAction()) - i && objectList[objectList.Count - 2].GetFrame() <= reTime.GetStart() + objectList[objectList.Count - 2].GetDisEnd(reTime.GetAction()) - i)
+                    {
+                        Debug.Log("成功");
+                        t = i;
+                        break;
+                    }
+                }
+                if (t >= 0)
+                {
+                    Debug.Log("TimingBeforeReTune:" + t);
+                    reTime.ReSetTiming(reTime.GetStart() - t);
+                    start.ReSetTiming(reTime.GetEnd() - t);
+                    TimeLine.RemoveAt(TimeLine.Count - 1);
+                    TimeLine.Add(reTime);
+                    TimeLine.Add(start);
+                    return;
+                }
+            }
+            else if (start.GetAction() == "SLIDE" && obj.JUMPTime() > 0)
+            {
+                Debug.Log("BeforeReTune");
+                Schedule reTime = new Schedule(start.GetStart() - 56, 56, "JUMP");
+                for (int i = 0; i < reTime.GetStart() - frameCount; i++)
+                {
+                    if (obj.GetFrame() > reTime.GetEnd() + obj.GetDisStart(start.GetAction()) - i && objectList[objectList.Count - 2].GetFrame() <= reTime.GetStart() + objectList[objectList.Count - 2].GetDisEnd(reTime.GetAction()) - i)
+                    {
+                        Debug.Log("成功");
+                        t = i;
+                        break;
+                    }
+                }
+                if (t >= 0)
+                {
+                    Debug.Log("TimingBeforeReTune:" + t);
+                    reTime.ReSetTiming(reTime.GetStart() - t);
+                    start.ReSetTiming(reTime.GetEnd() - t);
+                    TimeLine.RemoveAt(TimeLine.Count - 1);
+                    TimeLine.Add(reTime);
+                    TimeLine.Add(start);
+                    return;
+                }
+            }
+
+            /*後に行う動作を変更してタイミング調整を行う*/
+            if (start.GetAction()=="JUMP" && obj.SLIDETime() > 0){
+				Debug.Log("AfterReTune:");
+				start.ReSet("SLIDE",TimeLine[TimeLine.Count-1].GetEnd());
 				for(int i=0;i<TimeLine[TimeLine.Count-1].GetStart()-frameCount;i++){
 					if(obj.GetFrame()>TimeLine[TimeLine.Count-1].GetEnd()+obj.GetDisStart(start.GetAction())-i && objectList[objectList.Count-2].GetFrame() <= TimeLine[TimeLine.Count-1].GetStart()+objectList[objectList.Count-2].GetDisEnd(TimeLine[TimeLine.Count-1].GetAction())-i){
 						Debug.Log("成功");
@@ -148,12 +217,30 @@ public class Demo2controller : MonoBehaviour {
 						break;
 					}
 				}
-				if(t>0){
-				Debug.Log("TimingTune:"+t);
-				TimeLine[TimeLine.Count-1].ReSetTiming(TimeLine[TimeLine.Count-1].GetStart()-t);
-				start.ReSetTiming(TimeLine[TimeLine.Count-1].GetEnd()-t);
-				TimeLine.Add(start);
-				return;
+				if(t>=0){
+					Debug.Log("TimingAfterReTune:"+t);
+					TimeLine[TimeLine.Count-1].ReSetTiming(TimeLine[TimeLine.Count-1].GetStart()-t);
+					start.ReSetTiming(TimeLine[TimeLine.Count-1].GetEnd()-t);
+					TimeLine.Add(start);
+					return;
+				}
+			}else if(start.GetAction()=="SLIDE" && obj.JUMPTime() > 0){
+                Debug.Log("AfterReTune:");
+                start.ReSet("JUMP",TimeLine[TimeLine.Count-1].GetEnd());
+				for(int i=0;i<TimeLine[TimeLine.Count-1].GetStart()-frameCount;i++){
+					if(obj.GetFrame()>TimeLine[TimeLine.Count-1].GetEnd()+obj.GetDisStart(start.GetAction())-i && objectList[objectList.Count-2].GetFrame() <= TimeLine[TimeLine.Count-1].GetStart()+objectList[objectList.Count-2].GetDisEnd(TimeLine[TimeLine.Count-1].GetAction())-i){
+						Debug.Log("成功");
+						t=i;
+						break;
+					}
+				}
+				if(t>=0){
+					Debug.Log("TimingAfterReTune:"+t);
+					TimeLine[TimeLine.Count-1].ReSetTiming(TimeLine[TimeLine.Count-1].GetStart()-t);
+					start.ReSetTiming(TimeLine[TimeLine.Count-1].GetEnd()-t);
+					TimeLine.Add(start);
+					return;
+				}
 			}
 			Debug.Log("無理"+obj.GetFrame());
 
@@ -261,7 +348,7 @@ public class ActPosition2{
 	/*物体の範囲から接触するかどうかの判定を行う*/
 	public float AreaChecker(float[,] enemy){
 
-		float r = 0.15f;
+		float r = 0.2f;
 		for(int i=0;i<7;i++){
 			Vector2[] v = new Vector2[4];
 			Vector2[] m = new Vector2[4];
@@ -340,150 +427,150 @@ public class ComeObject{
 	public float GetDis(string name,int i){
 		if(name == "JUMP" && i<JUMPdisList.Length && i >= 0){
 			return JUMPdisList[i];
-		}else if(name == "SLIDE" && i<SLIDEdisList.Length && i >= 0){
-			return SLIDEdisList[i];
+			}else if(name == "SLIDE" && i<SLIDEdisList.Length && i >= 0){
+				return SLIDEdisList[i];
+			}
+			return 0;
 		}
-		return 0;
-	}
-	/*動作を再生して何フレーム後から回避できるか*/
-	public int GetDisStart(string s){
-		if(s=="JUMP"){
+		/*動作を再生して何フレーム後から回避できるか*/
+		public int GetDisStart(string s){
+			if(s=="JUMP"){
+				for(int i=0;i<JUMPdisList.Length;i++){
+					if(JUMPdisList[i]>0) return i*2;
+				}
+			}else{
+				for(int i=0;i<SLIDEdisList.Length;i++){
+					if(SLIDEdisList[i]>0) return i*2;
+				}
+			}
+			return 0;
+		}
+		/*動作を再生して何フレーム後まで回避できるか*/
+		public int GetDisEnd(string s){
+			int t=0;
+			if(s=="JUMP"){
+				for(int i=8;i<JUMPdisList.Length;i++){
+					if(JUMPdisList[i]>0){
+						t=i*2;
+					}else if(t>0){
+						break;
+					}
+				}
+			}else{
+				for(int i=0;i<SLIDEdisList.Length;i++){
+					if(SLIDEdisList[i]>0){
+						t=i*2;
+					}else if(t>0){
+						break;
+					}
+				}
+			}
+			return t;
+		}
+		/*どれだけ飛んでいられるか*/
+		public int JUMPTime(){
+			int t=0;
 			for(int i=0;i<JUMPdisList.Length;i++){
-				if(JUMPdisList[i]>0) return i*2;
-			}
-		}else{
-			for(int i=0;i<SLIDEdisList.Length;i++){
-				if(SLIDEdisList[i]>0) return i*2;
-			}
-		}
-		return 0;
-	}
-	/*動作を再生して何フレーム後まで回避できるか*/
-	public int GetDisEnd(string s){
-		int t=0;
-		if(s=="JUMP"){
-			for(int i=8;i<JUMPdisList.Length;i++){
 				if(JUMPdisList[i]>0){
-					t=i*2;
+					t++;
 				}else if(t>0){
 					break;
 				}
 			}
-		}else{
+			return t*2;
+		}
+		/*どれだけしゃがんでいられるか*/
+		public int SLIDETime(){
+			int t=0;
 			for(int i=0;i<SLIDEdisList.Length;i++){
 				if(SLIDEdisList[i]>0){
-					t=i*2;
+					t++;
 				}else if(t>0){
 					break;
 				}
 			}
+			return t*2;
 		}
-		return t;
-	}
-	/*どれだけ飛んでいられるか*/
-	public int JUMPTime(){
-		int t=0;
-		for(int i=0;i<JUMPdisList.Length;i++){
-			if(JUMPdisList[i]>0){
-				t++;
-			}else if(t>0){
-				break;
+		/*DisListとフレームから一番良い動作、タイミングを検索しScheduleにする*/
+		public Schedule ActTiming(List<ActPosition2> j,List<ActPosition2> s,int f){
+			int maxJ = 0;
+			Schedule result;
+			for(int i=0;i<JUMPdisList.Length;i++){
+				if(JUMPdisList[i]>JUMPdisList[maxJ]){
+					maxJ = i;
+				}
+			}
+
+			int maxS = 0;
+			for(int i=0;i<SLIDEdisList.Length;i++){
+				if(SLIDEdisList[i]>SLIDEdisList[maxS]){
+					maxS = i;
+				}
+			}
+
+			if(JUMPdisList[maxJ]>=SLIDEdisList[maxS]){
+				Debug.Log("JUMP!"+GetDisStart("JUMP")+":"+GetDisEnd("JUMP"));
+				result = new Schedule(f+comeTiming-j[maxJ].GetFrame(),56,"JUMP");
+				return result;
+			}else{
+				Debug.Log("SLIDE!"+GetDisStart("SLIDE")+":"+GetDisEnd("SLIDE"));
+				result = new Schedule(f+comeTiming-s[maxS].GetFrame(),40,"SLIDE");
+				return result;
 			}
 		}
-		return t*2;
 	}
-	/*どれだけしゃがんでいられるか*/
-	public int SLIDETime(){
-		int t=0;
-		for(int i=0;i<SLIDEdisList.Length;i++){
-			if(SLIDEdisList[i]>0){
-				t++;
-			}else if(t>0){
-				break;
+
+	/*アニメーションに関して行うアニメーション、そのタイミング、長さ、再生されているかどうか*/
+	public class Schedule{
+		int startFrame;
+		int length;
+		string action = "";
+		bool flag;
+		public Schedule(int f,int l,string act){
+			startFrame = f;
+			length = l;
+			action = act;
+			flag = true;
+		}
+
+		public int GetStart(){
+			return startFrame;
+		}
+
+		public bool GetFlag(){
+			return flag;
+		}
+
+		public void SetFlag(int f){
+			flag = false;
+			startFrame = f;
+		}
+
+		public void ReSet(string s,int f){
+			startFrame = f;
+			action = s;
+			Debug.Log("reset" + f);
+			if(s == "JUMP"){
+				length=56;
+			}else{
+				length=40;
 			}
 		}
-		return t*2;
-	}
-	/*DisListとフレームから一番良い動作、タイミングを検索しScheduleにする*/
-	public Schedule ActTiming(List<ActPosition2> j,List<ActPosition2> s,int f){
-		int maxJ = 0;
-		Schedule result;
-		for(int i=0;i<JUMPdisList.Length;i++){
-			if(JUMPdisList[i]>JUMPdisList[maxJ]){
-				maxJ = i;
-			}
+
+		public void ReSetTiming(int s){
+			startFrame = s;
 		}
 
-		int maxS = 0;
-		for(int i=0;i<SLIDEdisList.Length;i++){
-			if(SLIDEdisList[i]>SLIDEdisList[maxS]){
-				maxS = i;
-			}
+		public int GetLength(){
+			return length;
 		}
 
-		if(JUMPdisList[maxJ]>=SLIDEdisList[maxS]){
-			Debug.Log("JUMP!"+GetDisStart("JUMP")+":"+GetDisEnd("JUMP"));
-			result = new Schedule(f+comeTiming-j[maxJ].GetFrame(),56,"JUMP");
-			return result;
-		}else{
-			Debug.Log("SLIDE!"+GetDisStart("SLIDE")+":"+GetDisEnd("SLIDE"));
-			result = new Schedule(f+comeTiming-s[maxS].GetFrame(),40,"SLIDE");
-			return result;
+		public int GetEnd(){
+			return startFrame + length;
 		}
-	}
-}
 
-/*アニメーションに関して行うアニメーション、そのタイミング、長さ、再生されているかどうか*/
-public class Schedule{
-	int startFrame;
-	int length;
-	string action = "";
-	bool flag;
-	public Schedule(int f,int l,string act){
-		startFrame = f;
-		length = l;
-		action = act;
-		flag = true;
-	}
-
-	public int GetStart(){
-		return startFrame;
-	}
-
-	public bool GetFlag(){
-		return flag;
-	}
-
-	public void SetFlag(int f){
-		flag = false;
-		startFrame = f;
-	}
-
-	public void ReSet(string s,int f){
-		startFrame = f;
-		action = s;
-		Debug.Log("reset" + f);
-		if(s == "JUMP"){
-			length=56;
-		}else{
-			length=40;
+		public string GetAction(){
+			return action;
 		}
-	}
 
-	public void ReSetTiming(int s){
-		startFrame = s;
 	}
-
-	public int GetLength(){
-		return length;
-	}
-
-	public int GetEnd(){
-		return startFrame + length;
-	}
-
-	public string GetAction(){
-		return action;
-	}
-
-}
