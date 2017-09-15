@@ -241,7 +241,56 @@ public class Demo2controller : MonoBehaviour {
 					return;
 				}
 			}
-			Debug.Log("無理"+obj.GetFrame());
+            /*前と後に行う動作を変更してタイミング調整を行う*/
+            if (TimeLine[TimeLine.Count - 1].GetAction() == "JUMP" && objectList[objectList.Count - 2].SLIDETime() > 0)
+            {
+                Debug.Log("BeforeAfterReTune");
+                Schedule reTime = new Schedule(start.GetStart() - 40, 40, "SLIDE");
+                for (int i = 0; i < reTime.GetStart() - frameCount; i++)
+                {
+                    if (obj.GetFrame() > reTime.GetEnd() + obj.GetDisStart(start.GetAction()) - i && objectList[objectList.Count - 2].GetFrame() <= reTime.GetStart() + objectList[objectList.Count - 2].GetDisEnd(reTime.GetAction()) - i)
+                    {
+                        Debug.Log("成功");
+                        t = i;
+                        break;
+                    }
+                }
+                if (t >= 0)
+                {
+                    Debug.Log("TimingBeforeAfterReTune:" + t);
+                    reTime.ReSetTiming(reTime.GetStart() - t);
+                    start.ReSetTiming(reTime.GetEnd() - t);
+                    TimeLine.RemoveAt(TimeLine.Count - 1);
+                    TimeLine.Add(reTime);
+                    TimeLine.Add(start);
+                    return;
+                }
+            }
+            else if (start.GetAction() == "SLIDE" && obj.JUMPTime() > 0)
+            {
+                Debug.Log("BeforeAfterReTune");
+                Schedule reTime = new Schedule(start.GetStart() - 56, 56, "JUMP");
+                for (int i = 0; i < reTime.GetStart() - frameCount; i++)
+                {
+                    if (obj.GetFrame() > reTime.GetEnd() + obj.GetDisStart(start.GetAction()) - i && objectList[objectList.Count - 2].GetFrame() <= reTime.GetStart() + objectList[objectList.Count - 2].GetDisEnd(reTime.GetAction()) - i)
+                    {
+                        Debug.Log("成功");
+                        t = i;
+                        break;
+                    }
+                }
+                if (t >= 0)
+                {
+                    Debug.Log("TimingBeforeAfterReTune:" + t);
+                    reTime.ReSetTiming(reTime.GetStart() - t);
+                    start.ReSetTiming(reTime.GetEnd() - t);
+                    TimeLine.RemoveAt(TimeLine.Count - 1);
+                    TimeLine.Add(reTime);
+                    TimeLine.Add(start);
+                    return;
+                }
+            }
+            Debug.Log("無理"+obj.GetFrame());
 
 		}
 	}

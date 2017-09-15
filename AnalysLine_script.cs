@@ -20,7 +20,7 @@ public class AnalysLine_script : MonoBehaviour {
 
 	// Update is called once per frame
 	void Update () {
-		fi = new FileInfo(Application.dataPath + "/Analys7Position/"+motionName+ framecount.ToString("00") +".csv");
+		fi = new FileInfo(Application.dataPath + "/Analys6Position/"+motionName+ framecount.ToString("00") +".csv");
 		sw = fi.AppendText();
 
 		sw.WriteLine(positionName+","+transform.position.x.ToString() + "," + transform.position.y.ToString());
