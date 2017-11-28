@@ -14,10 +14,11 @@ public class Demo2controller : MonoBehaviour {
 	private int frameCount;
 	private List<ComeObject> objectList = new List<ComeObject>();
 	private List<Schedule> TimeLine = new List<Schedule>();
+    public Material hantoumei;
 
 
-	// Use this for initialization
-	void Start () {
+    // Use this for initialization
+    void Start () {
 		anim = GetComponent<Animator>();
 		frameCount = 0;
 
@@ -86,7 +87,7 @@ public class Demo2controller : MonoBehaviour {
 			if(TimeLine.Count == 0){
 				Scheduling(objectList[objectList.Count-1]);
 			}else{
-				ReScheduling(objectList[objectList.Count-1]);
+				ReScheduling(objectList[objectList.Count-1], collider);
 			}
 
 		}
@@ -99,7 +100,8 @@ public class Demo2controller : MonoBehaviour {
 
 	}
 	/*Scheduleがあるとき、すでに入っているScheduleと比較して処理*/
-	void ReScheduling(ComeObject obj){
+	void ReScheduling(ComeObject obj, Collider collider)
+    {
 		Schedule start = obj.ActTiming(JUMP,SLIDE,frameCount);
 		if(start.GetStart()>TimeLine[TimeLine.Count-1].GetEnd()){
 			/*すでに入っているScheduleと干渉しないとき、そのままScheduleを送る*/
@@ -291,8 +293,9 @@ public class Demo2controller : MonoBehaviour {
                 }
             }
             Debug.Log("無理"+obj.GetFrame());
+            collider.gameObject.GetComponent<Renderer>().material = hantoumei;
 
-		}
+        }
 	}
 	/*オブジェクトの座標とスケールからオブジェクトの範囲を調べる*/
 	float[,] EnemyArea(float xpos,float ypos,float xlen,float ylen){

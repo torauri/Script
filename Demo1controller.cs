@@ -108,7 +108,7 @@ public class ActPosition1{
 	public ActPosition1(string pass){
 		string filename = System.IO.Path.GetFileNameWithoutExtension(pass);
 		name = filename.Substring(0,filename.Length-2);
-		frame = float.Parse(filename.Substring(filename.Length-2));
+		frame = float.Parse(filename.Substring(filename.Length-2)) * 0.5f;
 		if(name == "JUMP"){
 			maxFrame = 56;
 		}else{
